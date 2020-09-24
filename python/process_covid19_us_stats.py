@@ -10,22 +10,22 @@ nyt_file = "tmp/nyt_us.csv"
 hopkins_file = "tmp/hopkins.csv"
 
 #delete file if existent - to be added as module function (delete file)
-import os
-if os.path.isfile(nyt_file):
-    os.remove(nyt_file)
-    print(nyt_file+" File Removed!")
-if os.path.isfile(hopkins_file):
-    os.remove(hopkins_file)
-    print(hopkins_file+" File Removed!")
+#import os
+#if os.path.isfile(nyt_file):
+#    os.remove(nyt_file)
+#    print(nyt_file+" File Removed!")
+#if os.path.isfile(hopkins_file):
+#    os.remove(hopkins_file)
+#    print(hopkins_file+" File Removed!")
 
 
-nyt_us_covid19 = requests.get("https://raw.githubusercontent.com//nytimes/covid-19-data/master/us.csv",allow_redirects=True)
-nyt_file = open("tmp/nyt_us.csv","wb")
-nyt_file.write(nyt_us_covid19.content)
+#nyt_us_covid19 = requests.get("https://raw.githubusercontent.com//nytimes/covid-19-data/master/us.csv",allow_redirects=True)
+#nyt_file = open("tmp/nyt_us.csv","wb+")
+#nyt_file.write(nyt_us_covid19.content)
 
-johns_hopkins_dataset = requests.get("https://raw.githubusercontent.com/datasets/covid-19/master/data/time-series-19-covid-combined.csv",allow_redirects=True)
-hopkins_file = open("tmp/hopkins.csv","wb")
-hopkins_file.write(johns_hopkins_dataset.content)
+#johns_hopkins_dataset = requests.get("https://raw.githubusercontent.com/datasets/covid-19/master/data/time-series-19-covid-combined.csv",allow_redirects=True)
+#hopkins_file = open("tmp/hopkins.csv","wb+")
+#hopkins_file.write(johns_hopkins_dataset.content)
 
 
 date_nyt = []
@@ -46,22 +46,85 @@ country = ""
 nyt_data = []
 hopkins_data = []
 
+from contextlib import closing
+import codecs
 
-with open('tmp/nyt_us.csv') as csvDataFile:
-    csvReader = csv.reader(csvDataFile)
+url_nyt = "https://raw.githubusercontent.com//nytimes/covid-19-data/master/us.csv"
+url_hopkins = "https://raw.githubusercontent.com/datasets/covid-19/master/data/time-series-19-covid-combined.csv"
+
+with closing(requests.get(url_nyt, stream=True,allow_redirects=True)) as r:
+    csvReader = csv.reader(codecs.iterdecode(r.iter_lines(), 'utf-8'))
+
+    header_row = next(csvReader)
+    #look for Date, Cases and Deaths, this is very ugly, to be redone!!!
+    if (header_row[0] == "date" or header_row[0] == "Date"):
+        idx_nyt_date = 0;
+    elif(header_row[0] == "cases" or header_row[0] == "Cases"):
+        idx_nyt_cases = 0;
+    elif(header_row[0] == "deaths" or header_row[0] == "Deaths"):
+        idx_nyt_deaths = 0;
+
+    if (header_row[1] == "date" or header_row[1] == "Date"):
+        idx_nyt_date = 1;
+    elif(header_row[1] == "cases" or header_row[1] == "Cases"):
+        idx_nyt_cases = 1;
+    elif(header_row[1] == "deaths" or header_row[1] == "Deaths"):
+        idx_nyt_deaths = 1;
+
+    if (header_row[2] == "date" or header_row[2] == "Date"):
+        idx_nyt_date = 2;
+    elif(header_row[2] == "cases" or header_row[0] == "Cases"):
+        idx_nyt_cases = 2;
+    elif(header_row[2] == "deaths" or header_row[0] == "Deaths"):
+        idx_nyt_deaths = 2;
+
+
     for row in csvReader:
         #We want to skip the header
         if (row[0] == "date" or row[0] == "Date"):
             continue
-        #we only want on list which is made of date, cases, deaths 
-        date_nyt.append(pd.to_datetime(row[0], errors='coerce', infer_datetime_format=True, format='%Y-%m-%d').date())
-        cases_nyt.append(row[1])
-        deaths_nyt.append(row[2])
+        #we only want on list which is made of date, cases, deaths
+        #in case formatting changes (cases changing row for instance, let's make the program more robust)
+        date_nyt.append(pd.to_datetime(row[idx_nyt_date], errors='coerce', infer_datetime_format=True, format='%Y-%m-%d').date())
+        cases_nyt.append(row[idx_nyt_cases])
+        deaths_nyt.append(row[idx_nyt_deaths])
+
+        #old way, hardcoded values, works
+        #date_nyt.append(pd.to_datetime(row[0], errors='coerce', infer_datetime_format=True, format='%Y-%m-%d').date())
+        #cases_nyt.append(row[1])
+        #deaths_nyt.append(row[2])
+
         recoveries_nyt.append("0")
 
+idx_hopkins_recoveries = 0
 
-with open('tmp/hopkins.csv') as csvDataFile:
-    csvReader = csv.reader(csvDataFile)
+
+
+with closing(requests.get(url_hopkins, stream=True,allow_redirects=True)) as r:
+    csvReader = csv.reader(codecs.iterdecode(r.iter_lines(), 'utf-8'))
+
+    header_row = next(csvReader)
+    #look for Date, Cases and Deaths, this is very ugly, to be redone!!!
+    if (header_row[0] == "recoveries" or header_row[0] == "Recoveries"):
+        idx_hopkins_recoveries = 0;
+    if (header_row[1] == "recoveries" or header_row[1] == "Recoveries"):
+        idx_hopkins_recoveries = 1;
+    if (header_row[2] == "recoveries" or header_row[2] == "Recoveries"):
+        idx_hopkins_recoveries = 2;
+    if (header_row[3] == "recoveries" or header_row[3] == "Recoveries"):
+        idx_hopkins_recoveries = 3;
+    if (header_row[4] == "recoveries" or header_row[4] == "Recoveries"):
+        idx_hopkins_recoveries = 4;
+    if (header_row[5] == "recoveries" or header_row[5] == "Recoveries"):
+        idx_hopkins_recoveries = 5;
+    if (header_row[6] == "recoveries" or header_row[6] == "Recoveries"):
+        idx_hopkins_recoveries = 6;
+    if (header_row[7] == "recoveries" or header_row[7] == "Recoveries"):
+        idx_hopkins_recoveries = 7; 
+
+
+
+
     for row in csvReader:
         # Only copy rows if data is for US
         #We want to skip the header
@@ -74,8 +137,9 @@ with open('tmp/hopkins.csv') as csvDataFile:
             for idx,date in enumerate(date_nyt):
                 if date == hopkins_date_lookup_for_nyt_list:
                     date_hopkins.append(hopkins_date_lookup_for_nyt_list)
-                    recoveries_hopkins.append(row[6])
-                    #recoveries_nyt[idx] = row[6]
+                    recoveries_hopkins.append(row[idx_hopkins_recoveries])
+#                    recoveries_hopkins.append(row[6])
+
 
 
 # We will now join both lists
@@ -167,7 +231,7 @@ for idx_joint_list, list in enumerate(joint_list_date):
         if e.response['Error']['Code'] != 'ConditionalCheckFailedException':
             raise
 
-print("We have added "+ str(count_added_row) + " row!s")
+print("We have added "+ str(count_added_row) + " rows")
 
 import boto3
 
