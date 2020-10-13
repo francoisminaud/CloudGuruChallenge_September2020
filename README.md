@@ -1,2 +1,5 @@
 # CloudGuruChallenge_September2020
-Cloud Guru Challenge September 2020 : Event-Driven Python on AWS
+Project can be found on GitLab : https://gitlab.com/francois.minaud/cloud-challenge-covid19-etl
+I used GitLab due to it's easy GitLab CI system.
+
+Code source may be migrated here later on when I play with GitHub Actions.
